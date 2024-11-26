@@ -1,0 +1,4 @@
+libcarp.a
+*.o
+*.gch
+*.pch
