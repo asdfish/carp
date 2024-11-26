@@ -2,3 +2,5 @@ libcarp.a
 *.o
 *.gch
 *.pch
+
+test
