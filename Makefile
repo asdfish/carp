@@ -5,7 +5,7 @@ COMMONFLAGS := -std=c99 $\
 							 -Iinclude
 
 # uncomment/comment to enable/disable
-# PROCESS_HEADER_FILES := yes
+PROCESS_HEADER_FILES := yes
 PROCESSED_HEADER_FILES := $(if ${PROCESS_HEADER_FILES},$\
 														$(subst .h,$\
 															$(if $(findstring clang,${CC}),$\
@@ -34,7 +34,10 @@ $(foreach ITEM,$\
 	$(call REMOVE,${ITEM}))
 endef
 
-all: libcarp.a
+all: libcarp.a test
+
+test: libcarp.a test.c
+	${CC} test.c ${CFLAGS} ${COMMONFLAGS} -L. -lcarp -o $@
 
 libcarp.a: ${LIBCARP_REQUIREMENTS}
 	ar rcs $@ ${OBJECT_FILES}
