@@ -39,55 +39,73 @@ extern int carp_parse(int argc, const char** restrict argv, const struct CarpOpt
 
 bool passed_double_dash = false;
 
+
 #ifdef __cplusplus
 int carp_parse(int argc, const char** argv, const struct CarpOption* options, size_t options_length, carp_callback callback, void* user_data)
 #else
 int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data)
 #endif
 {
-  int result = -1;
+  enum ArgumentType {
+    LOCAL_SHORT,
+    LOCAL_LONG,
+    LOCAL_KEY,
+  };
 
   for(int i = 1; i < argc; i ++) {
-    if(argv[i][0] != '-' || strlen(argv[i]) <= 1) {
-      result = callback(0, KEY, argv[i], user_data);
-      if(result != 0)
-        return result;
-    }
+    enum ArgumentType argument_type = LOCAL_KEY;
 
-    bool long_flag = strncmp(argv[i], "--", 2) == 0 && !passed_double_dash;
-
-    ssize_t option_index = -1;
-    if(long_flag) {
+    if(!passed_double_dash) {
+      if(strncmp(argv[i], "--", 2) == 0)
+        argument_type = LOCAL_LONG;
+      else if(argv[i][0] == '-')
+        argument_type = LOCAL_SHORT;
+      
       if(strcmp(argv[i], "--") == 0) {
         passed_double_dash = true;
         continue;
       }
-
-      char* flag = (char*) argv[i] + 2;
-      for(size_t i = 0; i < options_length; i ++)
-        if(strcmp(flag, options[i].flag_long) == 0) {
-          option_index = i;
-          break;
-        }
-    } else {
-      char flag = argv[i][1];
-      for(size_t i = 0; i < options_length; i ++)
-        if(flag == options[i].flag_short) {
-          option_index = i;
-          break;
-        }
     }
 
-    if(option_index == -1) {
+    ssize_t option_index = -1;
+    for(size_t j = 0; j < options_length; j ++) {
+      switch(argument_type) {
+        case LOCAL_LONG:
+          if(strcmp(options[j].flag_long, argv[i] + 2) == 0) {
+            option_index = j;
+            goto exit_loop;
+          }
+          break;
+        case LOCAL_SHORT:
+          if(options[j].flag_short == argv[i][1]) {
+            option_index = j;
+            goto exit_loop;
+          }
+          break;
+        case LOCAL_KEY:
+          goto exit_loop;
+          break;
+      }
+      continue;
+
+exit_loop:
+      break;
+    }
+
+    if(argument_type != LOCAL_KEY && option_index == -1)
+      argument_type = LOCAL_KEY;
+
+    int result = 0;
+    if(argument_type == LOCAL_KEY) {
       result = callback(0, KEY, argv[i], user_data);
-      if(result != 0)
-        return result;
+    } else {
+      if(options[option_index].require_argument) {
+        i ++;
+        result = callback(options[option_index].flag_short, FLAG, i >= argc ? NULL : argv[i], user_data);
+      } else
+        result = callback(options[option_index].flag_short, FLAG, argv[i], user_data);
     }
 
-    if(options[option_index].require_argument)
-      result = callback(options[option_index].flag_short, FLAG, i ++ >= argc ? NULL : argv[i], user_data);
-    else
-      result = callback(options[option_index].flag_short, FLAG, NULL, user_data);
     if(result != 0)
       return result;
   }
