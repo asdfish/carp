@@ -1,11 +1,13 @@
 #ifndef CARP_H
 #define CARP_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 struct CarpOption {
   const char* flag_long;
   char flag_short;
+  bool require_argument;
 };
 
 enum CarpArgumentType {
@@ -17,8 +19,7 @@ typedef int (*carp_callback) (char flag_short, enum CarpArgumentType argument_ty
 
 extern int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data);
 
-#ifndef CARP_IMPLEMENTATION
-#include <stdbool.h>
+#ifdef CARP_IMPLEMENTATION
 #include <string.h>
 #include <sys/types.h>
 
@@ -49,7 +50,10 @@ int carp_parse(int argc, const char** restrict argv, const struct CarpOption* re
     if(option_index == -1)
       goto callback_default;
 
-    callback(options[option_index].flag_short, FLAG, i ++ >= argc ? NULL : argv[i], user_data);
+    if(options[option_index].require_argument)
+      callback(options[option_index].flag_short, FLAG, i ++ >= argc ? NULL : argv[i], user_data);
+    else
+      callback(options[option_index].flag_short, FLAG, NULL, user_data);
     continue;
 
 callback_default:
