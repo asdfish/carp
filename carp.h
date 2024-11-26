@@ -24,6 +24,8 @@ extern int carp_parse(int argc, const char** restrict argv, const struct CarpOpt
 #include <sys/types.h>
 
 int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data) {
+  int result = -1;
+
   for(int i = 1; i < argc; i ++) {
     if(argv[i][0] != '-' || strlen(argv[i]) <= 1)
       goto callback_default;
@@ -50,14 +52,20 @@ int carp_parse(int argc, const char** restrict argv, const struct CarpOption* re
     if(option_index == -1)
       goto callback_default;
 
-    if(options[option_index].require_argument)
-      callback(options[option_index].flag_short, FLAG, i ++ >= argc ? NULL : argv[i], user_data);
-    else
-      callback(options[option_index].flag_short, FLAG, NULL, user_data);
-    continue;
+    if(options[option_index].require_argument) {
+      result = callback(options[option_index].flag_short, FLAG, i ++ >= argc ? NULL : argv[i], user_data);
+      goto parse_result;
+    } else {
+      result = callback(options[option_index].flag_short, FLAG, NULL, user_data);
+      goto parse_result;
+    }
 
 callback_default:
-    callback(0, KEY, argv[i], user_data);
+    result = callback(0, KEY, argv[i], user_data);
+
+parse_result:
+    if(result != 0)
+      return result;
   }
   return 0;
 }
