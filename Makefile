@@ -1,17 +1,16 @@
 CC ?= cc
-CFLAGS ?= -O2 -march=native -pipe
-COMMONFLAGS := -std=c99 $\
-							 -Wall -Wextra -Wpedantic $\
-							 -I.
+CFLAGS ?= -O2 -march=native -pipe -Wall -Wextra -Wpedantic
+override CFLAGS += -std=c99
+override CFLAGS += -Iinclude
 
 OBJECT_FILES := $(patsubst src/%.c,$\
 									build/%.o,$\
 									$(shell find src -name '*.c' -type f))
 
-TEST_REQUIREMENTS := ${OBJECT_FILES}
+LIBCARP_REQUIREMENTS := ${OBJECT_FILES}
 
 define COMPILE
-${CC} -c $(1) ${CFLAGS} ${COMMONFLAGS} -o $(2)
+${CC} -c $(1) ${CFLAGS} -o $(2)
 
 endef
 define REMOVE
@@ -25,10 +24,10 @@ $(foreach ITEM,$\
 	$(call REMOVE,${ITEM}))
 endef
 
-all: test
+all: libcarp.a
 
-test: ${TEST_REQUIREMENTS}
-	${CC} $< ${CFLAGS} ${COMMONFLAGS} -o $@
+libcarp.a: ${LIBCARP_REQUIREMENTS}
+	ar rcs $@ ${OBJECT_FILES}
 
 build/%.o: src/%.c
 	$(call COMPILE,$<,$@)
@@ -38,7 +37,7 @@ build/%.o: src/%.c
 	$(call COMPILE,$<,$@)
 
 clean:
-	$(call REMOVE_LIST,${TEST_REQUIREMENTS})
+	$(call REMOVE_LIST,${LIBCARP_REQUIREMENTS})
 	$(call REMOVE,libcarp.a)
 
 .PHONY: all clean install uninstall

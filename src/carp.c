@@ -1,59 +1,21 @@
-#ifndef CARP_H
-#define CARP_H
+#include <carp/carp.h>
 
-#include <stdbool.h>
-#include <stddef.h>
-
-struct CarpOption {
-  const char* flag_long;
-  char flag_short;
-  bool require_argument;
-};
-
-enum CarpArgumentType {
-  FLAG,
-  KEY,
-};
-
-#ifdef __cplusplus
-typedef int (*carp_callback) (char flag_short, enum CarpArgumentType argument_type, const char* argument, void* user_data);
-#else
-typedef int (*carp_callback) (char flag_short, enum CarpArgumentType argument_type, const char* restrict argument, void* restrict user_data);
-#endif
-
-#ifdef __cplusplus
-extern int carp_parse(int argc, const char** argv, const struct CarpOption* options, size_t options_length, carp_callback callback, void* user_data);
-#else
-extern int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data);
-#endif
-
-#ifdef CARP_IMPLEMENTATION
-#ifdef __cplusplus
-#include <cstring>
-#else
 #include <stdbool.h>
 #include <string.h>
-#endif
 
 #include <sys/types.h>
 
 bool passed_double_dash = false;
 
-
-#ifdef __cplusplus
-int carp_parse(int argc, const char** argv, const struct CarpOption* options, size_t options_length, carp_callback callback, void* user_data)
-#else
-int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data)
-#endif
-{
-  enum ArgumentType {
+int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data) {
+  enum LocalArgumentType {
     LOCAL_SHORT,
     LOCAL_LONG,
     LOCAL_KEY,
   };
 
   for(int i = 1; i < argc; i ++) {
-    enum ArgumentType argument_type = LOCAL_KEY;
+    enum LocalArgumentType argument_type = LOCAL_KEY;
 
     if(!passed_double_dash) {
       if(strncmp(argv[i], "--", 2) == 0)
@@ -111,6 +73,3 @@ exit_loop:
   }
   return 0;
 }
-#endif // CARP_IMPLEMENTATION
-
-#endif // CARP_H
