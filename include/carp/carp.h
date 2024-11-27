@@ -19,8 +19,8 @@ enum CarpArgumentType {
   KEY,
 };
 
-typedef int (*carp_callback) (char flag_short, enum CarpArgumentType argument_type, const char* restrict argument, void* restrict user_data);
-extern int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data);
+typedef int (*carp_callback) (char flag_short, enum CarpArgumentType argument_type, const char* argument, void* user_data);
+extern int carp_parse(int argc, const char** argv, const struct CarpOption* options, size_t options_length, carp_callback callback, void* user_data);
 
 #ifdef __cplusplus
 }
