@@ -7,15 +7,15 @@
 
 bool passed_double_dash = false;
 
-int carp_parse(int argc, const char** restrict argv, const struct CarpOption* restrict options, size_t options_length, carp_callback callback, void* user_data) {
-  enum LocalArgumentType {
-    LOCAL_SHORT,
-    LOCAL_LONG,
-    LOCAL_KEY,
-  };
+typedef enum {
+  LOCAL_SHORT,
+  LOCAL_LONG,
+  LOCAL_KEY,
+} local_argument_t;
+int carp_parse(int argc, const char** restrict argv, const carp_option_t* restrict options, size_t options_length, carp_callback callback, void* restrict user_data) {
 
   for(int i = 1; i < argc; i ++) {
-    enum LocalArgumentType argument_type = LOCAL_KEY;
+    local_argument_t argument_type = LOCAL_KEY;
 
     if(!passed_double_dash) {
       if(strncmp(argv[i], "--", 2) == 0)
@@ -59,13 +59,13 @@ exit_loop:
 
     int result = 0;
     if(argument_type == LOCAL_KEY) {
-      result = callback(0, KEY, argv[i], user_data);
+      result = callback(0, CARP_ARGUMENT_TYPE_KEY, argv[i], user_data);
     } else {
       if(options[option_index].require_argument) {
         i ++;
-        result = callback(options[option_index].flag_short, FLAG, i >= argc ? NULL : argv[i], user_data);
+        result = callback(options[option_index].flag_short, CARP_ARGUMENT_TYPE_FLAG, i >= argc ? NULL : argv[i], user_data);
       } else
-        result = callback(options[option_index].flag_short, FLAG, argv[i], user_data);
+        result = callback(options[option_index].flag_short, CARP_ARGUMENT_TYPE_FLAG, argv[i], user_data);
     }
 
     if(result != 0)
